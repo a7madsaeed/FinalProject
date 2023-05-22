@@ -4,10 +4,15 @@
  */
 package com.mycompany.finalproject;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -97,9 +102,6 @@ public class Utils {
         } else {
             StudentGender = Gender.female;
         }
-//        uni id 
-        System.out.print("university id: ");
-        int StudentUniversityId = sc.nextInt();
 
         x.add(new Student(StudentUsername, StudentPassword,
                 StudentName, StudentBirthday, StudentGender));
@@ -588,7 +590,7 @@ public class Utils {
         }
     }
 
-    public static void addExam(ArrayList<Exam> x, ArrayList<Question> y) {
+    public static void addExam(ArrayList<Exam> x, ArrayList<Question> y, Teacher t) {
         Scanner sc = new Scanner(System.in);
         System.out.println("add Exam:-");
         String name;
@@ -658,40 +660,80 @@ public class Utils {
                 System.out.println("*Invalid input*");
             }
         } while (!valid);
+
+//        do {
+//            System.out.print("number of questions: ");
+//            numberOfQuestions = sc.nextInt();
+//            if (numberOfQuestions <= 0) {
+//                System.out.println("*Invalid Inputs");
+//            }
+//        } while (numberOfQuestions <= 0);
+        ArrayList<Question> availableQuestions = new ArrayList<>(y);
+        int availableQuestionsCount = 0;
         do {
-            System.out.print("number of questions: ");
+
+            System.out.print("Number of questions: ");
             numberOfQuestions = sc.nextInt();
+
             if (numberOfQuestions <= 0) {
                 System.out.println("*Invalid Inputs");
+            } else {
+                // حساب عدد الأسئلة المتاحة من النوع المحدد
+
+                if (YesOrNo || Multiplechoice || Fillblank) {
+                    for (Question availableQuestion : availableQuestions) {
+                        if ((availableQuestion instanceof YesOrNo && YesOrNo)
+                                || (availableQuestion instanceof Multiplechoice && Multiplechoice)
+                                || (availableQuestion instanceof Fillblank && Fillblank)) {
+                            availableQuestionsCount++;
+                        }
+                    }
+                }
+
+                // إذا قام المستخدم بإدخال عدد أكبر من المتاح، يتم طلبه من إعادة إدخال العدد من جديد
+                if (numberOfQuestions > availableQuestionsCount) {
+                    System.out.println("The number of available questions for the selected type is " + availableQuestionsCount);
+                    System.out.println("Please enter a number less than or equal to " + availableQuestionsCount + ".");
+                }
             }
-        } while (numberOfQuestions <= 0);
+        } while (numberOfQuestions <= 0 || numberOfQuestions > availableQuestionsCount);
 
         System.out.print("min pass average: ");
         minPassAverage = sc.nextInt();
 
         x.add(new Exam(name, numberOfQuestions, minPassAverage, YesOrNo,
-                Multiplechoice, Fillblank, y));
+                Multiplechoice, Fillblank, y, t));
 
     }
 
-    public static void viewExam(ArrayList<Exam> x) {
+    public static void viewExam(ArrayList<Exam> x, Teacher t) {
         System.out.println("id | name | number of questions | pass mark | total mark | ");
         for (int i = 0; i < x.size(); i++) {
-            System.out.print(x.get(i).getEid() + "  | ");
-            System.out.print(x.get(i).getName() + " | ");
-            System.out.print(x.get(i).getNumberOfQuestions() + " | ");
-            System.out.print(x.get(i).getMinPassAverage() + " | ");
-            System.out.print(x.get(i).getTotalMarks() + " | ");
-            for (int j = 0; j < x.get(i).getQuestions().size(); j++) {
-                System.out.print(x.get(i).getQuestions(j).getName() + ",");
+
+            if (x.get(i).getT() == t) {
+
+                System.out.print(x.get(i).getEid() + "  | ");
+                System.out.print(x.get(i).getName() + " | ");
+                System.out.print(x.get(i).getNumberOfQuestions() + " | ");
+                System.out.print(x.get(i).getMinPassAverage() + " | ");
+                System.out.print(x.get(i).getTotalMarks() + " | ");
+                for (int j = 0; j < x.get(i).getQuestions().size(); j++) {
+                    System.out.print(x.get(i).getQuestions(j).getName() + ",");
+                }
+                System.out.print("\n");
             }
-            System.out.print("\n");
         }
     }
 
-    public static void solveExam(ArrayList<ExamResult> x, Exam e, Student s) {
+    public static boolean solveExam(ArrayList<ExamResult> x, Exam e, Student s) {
         Scanner sc = new Scanner(System.in);
 
+        for (int i = 0; i < x.size(); i++) {
+            if (x.get(i).getE() == e && x.get(i).getS() == s) {
+                System.out.println("you have already attempt this exam");
+                return false;
+            }
+        }
         System.out.println("solve exam:-");
         System.out.println("exam name: " + e.getName());
         int mark = 0;
@@ -741,11 +783,12 @@ public class Utils {
         }
         System.out.println("grade: " + mark + "/" + e.getTotalMarks());
         x.add(new ExamResult(e, s, mark, answers));
+        return true;
     }
 
-    public static void viewExamResultForTeacher(ArrayList<ExamResult> x, ArrayList<Exam> y) {
+    public static void viewExamResultForTeacher(ArrayList<ExamResult> x, ArrayList<Exam> y, Teacher t) {
         Scanner sc = new Scanner(System.in);
-        viewExam(y);
+        viewExam(y, t);
         String choose;
         do {
             System.out.println("choose exam id:");
@@ -855,6 +898,54 @@ public class Utils {
         x.set(s.getUid(), addStudent(x, s.getUid()));
     }
 
+    public static void viewRank(ArrayList<ExamResult> x, ArrayList<User> y) {
+        ArrayList<Student> students = new ArrayList<Student>();
+        for (int i = 0; i < y.size(); i++) {
+            int count = 0, totalMark = 0;
+            double avg = 0.0;
+            if (y.get(i) instanceof Student e) {
+                students.add(e);
+                for (int j = 0; j < x.size(); j++) {
+                    if (x.get(j).getS() == e) {
+                        totalMark += x.get(j).getMark();
+                        count++;
+                    }
+                }
+                try {
+                    avg = totalMark / count;
+                    e.setAvg(avg);
+                } catch (Exception g) {
+                    if (totalMark == 0) {
+
+                        System.out.println("student didn't attemp any exam");
+                    }
+                }
+            }
+        }
+
+        // Sort the list of Student objects by average in descending order
+        try {
+
+            Collections.sort(students, new Comparator<Student>() {
+                public int compare(Student s1, Student s2) {
+                    return Double.compare(s2.getAvg(), s1.getAvg());
+                }
+            });
+            // Print the top 5 students with the highest average
+            for (int i = 0; i < 5; i++) {
+                System.out.print((i + 1) + ". " + students.get(i).getName() + " | avg: ");
+                students.get(i).getAvg();
+                if (students.get(i).getAvg() == 0.0) {
+                    System.out.print("there is no data" + "\n");
+                } else {
+                    System.out.print(students.get(i).getAvg() + "\n");
+                }
+            }
+        } catch (Exception f) {
+//            System.out.println("there is no data");
+        }
+    }
+
     public static boolean isNumeric(String x) {
         if (x == null) {
             return false;
@@ -866,5 +957,15 @@ public class Utils {
         }
         return true;
 
+    }
+
+    public static Teacher searchByName(ArrayList<User> x, String u) {
+        for (int i = 0; i < x.size(); i++) {
+            if (x.get(i).getUsername().equals(u)) {
+                Teacher t = (Teacher) x.get(i);
+                return t;
+            }
+        }
+        return null;
     }
 }
