@@ -12,7 +12,7 @@ public class Student extends User {
 
     private static int id;
     private int universityId;
-    private Teacher t;
+    private double avg;
 
     public Student(String username, String password, String name, String birthday,
             Gender gender) {
@@ -33,6 +33,14 @@ public class Student extends User {
 
     public void setUniversityId(int universityId) {
         this.universityId = universityId;
+    }
+
+    public double getAvg() {
+        return avg;
+    }
+
+    public void setAvg(double avg) {
+        this.avg = avg;
     }
 
 }
