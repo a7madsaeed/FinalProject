@@ -22,42 +22,45 @@ public class Exam {
     private boolean Multiplechoice;
     private boolean Fillblank;
     private ArrayList<Question> questions;
+    private Teacher t;
 
     public Exam(String name, int numberOfQuestions, int minPassAverage, boolean YesOrNo,
-            boolean Multiplechoice, boolean Fillblank, ArrayList<Question> y) {
+            boolean Multiplechoice, boolean Fillblank, ArrayList<Question> y, Teacher t) {
         id++;
         this.Eid = id;
         this.name = name;
         this.numberOfQuestions = numberOfQuestions;
         this.minPassAverage = minPassAverage;
-
+        this.t= t;
         this.YesOrNo = YesOrNo;
         this.Multiplechoice = Multiplechoice;
         this.Fillblank = Fillblank;
+
         ArrayList<Question> q = new ArrayList<>();
+        ArrayList<Question> availableQuestions = new ArrayList<>(y);
+        Class<? extends Question> lastQuestionType = null;
 
-        if (YesOrNo && Multiplechoice && Fillblank) {
-            for (int i = 0; i <= numberOfQuestions; i++) {
+        while (q.size() < numberOfQuestions && !availableQuestions.isEmpty()) {
+            int randomIndex = (int) (Math.random() * availableQuestions.size());
+            Question currentQuestion = availableQuestions.get(randomIndex);
 
-                q.add(y.get(i));
-            }
-        } else if (YesOrNo && Multiplechoice && !Fillblank) {
-            for (int i = 0; i <= numberOfQuestions; i++) {
-                if (y.get(i) instanceof YesOrNo || y.get(i) instanceof Multiplechoice) {
-                    q.add(y.get(i));
+            if ((currentQuestion instanceof YesOrNo && YesOrNo)
+                    || (currentQuestion instanceof Multiplechoice && Multiplechoice)
+                    || (currentQuestion instanceof Fillblank && Fillblank)) {
+
+                // التحقق من أن نوع السؤال الحالي مختلف عن نوع السؤال السابق
+                if (lastQuestionType != null && lastQuestionType.equals(currentQuestion.getClass())) {
+                    continue;
                 }
+
+                q.add(currentQuestion);
+                lastQuestionType = currentQuestion.getClass();
             }
-        } else if (YesOrNo && !Multiplechoice && Fillblank) {
-            for (int i = 0; i <= numberOfQuestions; i++) {
-                if (y.get(i) instanceof YesOrNo || y.get(i) instanceof Fillblank) {
-                    q.add(y.get(i));
-                }
-            }
-        } else if (!YesOrNo && Multiplechoice && Fillblank) {
-            for (int i = 0; i <= numberOfQuestions; i++) {
-                if (y.get(i) instanceof Multiplechoice || y.get(i) instanceof Fillblank) {
-                    q.add(y.get(i));
-                }
+
+            availableQuestions.remove(randomIndex);
+            if (availableQuestions.isEmpty()) {
+                availableQuestions.addAll(y);
+                lastQuestionType = null;
             }
         }
         for (int i = 0; i < q.size(); i++) {
@@ -65,6 +68,36 @@ public class Exam {
         }
         this.questions = q;
 
+//        ArrayList<Question> q = new ArrayList<>();
+//
+//        if (YesOrNo && Multiplechoice && Fillblank) {
+//            for (int i = 0; i <= numberOfQuestions; i++) {
+//
+//                q.add(y.get(i));
+//            }
+//        } else if (YesOrNo && Multiplechoice && !Fillblank) {
+//            for (int i = 0; i <= numberOfQuestions; i++) {
+//                if (y.get(i) instanceof YesOrNo || y.get(i) instanceof Multiplechoice) {
+//                    q.add(y.get(i));
+//                }
+//            }
+//        } else if (YesOrNo && !Multiplechoice && Fillblank) {
+//            for (int i = 0; i <= numberOfQuestions; i++) {
+//                if (y.get(i) instanceof YesOrNo || y.get(i) instanceof Fillblank) {
+//                    q.add(y.get(i));
+//                }
+//            }
+//        } else if (!YesOrNo && Multiplechoice && Fillblank) {
+//            for (int i = 0; i <= numberOfQuestions; i++) {
+//                if (y.get(i) instanceof Multiplechoice || y.get(i) instanceof Fillblank) {
+//                    q.add(y.get(i));
+//                }
+//            }
+//        }
+//        for (int i = 0; i < q.size(); i++) {
+//            this.totalMarks += q.get(i).getMark();
+//        }
+//        this.questions = q;
     }
 
     public static int getId() {
@@ -85,6 +118,14 @@ public class Exam {
 
     public String getName() {
         return name;
+    }
+
+    public Teacher getT() {
+        return t;
+    }
+
+    public void setT(Teacher t) {
+        this.t = t;
     }
 
     public void setName(String name) {
