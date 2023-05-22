@@ -11,6 +11,7 @@ import java.util.Scanner;
  *
  * @author HP
  */
+
 public class FinalProject {
 
     public static void main(String[] args) {
@@ -39,9 +40,9 @@ public class FinalProject {
         q.add(new Fillblank("What is the keywords that used to inherit from a class?", 2, null, "extends"));
 
         ArrayList<Exam> exam = new ArrayList<>();
-        exam.add(new Exam("math", 4, 4, false, true, true, q));
-        exam.add(new Exam("english", 4, 2, true, false, true, q));
-        exam.add(new Exam("physic", 2, 2, true, true, false, q));
+        exam.add(new Exam("math", 4, 4, false, true, true, q, Utils.searchByName(users, "jaffer")));
+        exam.add(new Exam("english", 4, 2, true, false, true, q, Utils.searchByName(users, "MohDalo")));
+        exam.add(new Exam("physic", 2, 2, true, true, false, q, Utils.searchByName(users, "jaffer")));
 
         ArrayList<ExamResult> examResult = new ArrayList<>();
 
@@ -208,13 +209,13 @@ public class FinalProject {
 
                             }
                             case "6" -> {
-                                Utils.addExam(exam, q);
+                                Utils.addExam(exam, q, (Teacher) loggedUser);
                             }
                             case "7" -> {
-                                Utils.viewExam(exam);
+                                Utils.viewExam(exam, (Teacher) loggedUser);
                             }
                             case "8" -> {
-                                Utils.viewExamResultForTeacher(examResult, exam);
+                                Utils.viewExamResultForTeacher(examResult, exam, (Teacher) loggedUser);
                             }
                             case "9" -> {
 
@@ -276,6 +277,12 @@ public class FinalProject {
                             }
                             case "4" -> {
                                 Utils.editInformation(users, (Student) loggedUser);
+                            }
+                            case "5" -> {
+
+                            }
+                            case "6" -> {
+                                Utils.viewRank(examResult, users);
                             }
                             default -> {
                                 System.out.println("////////////////////////////");
